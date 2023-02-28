@@ -1,0 +1,146 @@
+#pragma once
+#include<iostream>
+#include<cstdlib>
+#include <ctime>
+#include <string>
+#include <graphics.h>
+#include <chrono>
+#include <random>
+
+#include "Bullet.h"
+#include "Object.h"
+#include "Weapon.h"
+#include "Map.h"
+
+#define isKeyPressed(nVirtKey)	(GetKeyState(nVirtKey) & (1<<(sizeof(SHORT)*8-1))) != 0
+// #define random(a,b) (rand()%(b-a+1)+a)
+
+using namespace std;
+
+class Drop :public Object
+{
+public:
+	int type;
+	string weaponName;
+	IMAGE DropBlackImages[20];//掉落物黑底彩图
+	IMAGE DropCoverImages[20];//掉落物遮罩图
+	// 掉落物做成对象,type为掉落物的类型
+
+	IMAGE ExperienceBlack;
+	IMAGE ExperienceCover;
+
+	Drop();
+	void trigger();
+	void drawDrop();
+	void ExperiencePickUp();
+	void drawExperience();
+};
+
+Drop::Drop()
+{
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	mt19937 rand_num(seed);
+	uniform_int_distribution<int> dist(0, 10);
+	type = dist(rand_num);
+}
+
+/*
+ 掉落物类型：
+ 武器类：近战武器、远程武器
+	近战武器：剑(1)、锤子(2)
+	远程武器：枪(3)、斧头(8)、激光枪(9)
+ 物品类：血瓶(4)
+ BUFF类：移速(5)、攻速(6)、增加伤害(7)
+*/
+
+void Drop::trigger()
+{
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	mt19937 rand_num(seed);
+	uniform_int_distribution<int> dist(1, 9);
+	type = dist(rand_num);
+	string filepath1;
+	string filepath2;
+	if (type == 1)
+	{
+		weaponName = "剑";
+		filepath1 = "剑黑底彩图1.png";
+		filepath2 = "剑遮罩图1.png";
+	}
+	else if (type == 2)
+	{
+		weaponName = "锤子";
+		filepath1 = "锤子黑底彩图1.png";
+		filepath2 = "锤子遮罩图1.png";
+	}
+	else if (type == 3)
+	{
+		weaponName = "枪";
+		filepath1 = "枪黑底彩图8.png";
+		filepath2 = "枪遮罩图8.png";
+	}
+	else if (type == 4)
+	{
+		filepath1 = "血瓶黑彩.png";
+		filepath2 = "血瓶白遮罩.png";
+	}
+	else if (type == 5)
+	{
+		filepath1 = "移速加成黑彩.png";
+		filepath2 = "移速加成白遮罩.png";
+	}
+	else if (type == 6)
+	{
+		filepath1 = "攻速加成黑彩.png";
+		filepath2 = "攻速加成白遮罩.png";
+	}
+	else if (type == 7)
+	{
+		filepath1 = "伤害加成黑彩.png";
+		filepath2 = "伤害加成白遮罩.png";
+	}
+	else if (type == 8)
+	{
+		weaponName = "斧头";
+		filepath1 = "斧头黑底彩图1.png";
+		filepath2 = "斧头遮罩图1.png";
+	}
+	else if (type == 9)
+	{
+		weaponName = "激光枪";
+		filepath1 = "激光枪黑底彩图8.png";
+		filepath2 = "激光枪遮罩图8.png";
+	}
+	if (&DropCoverImages[type] != NULL && &DropBlackImages[type] != NULL)
+	{
+		loadimage(&DropBlackImages[type], filepath1.c_str(), 0, 0, false);
+		loadimage(&DropCoverImages[type], filepath2.c_str(), 0, 0, false);
+	}
+
+}
+
+void Drop::ExperiencePickUp()
+{
+	string filepath1, filepath2;
+	filepath1 = "经验黑底彩图.png";
+	filepath2 = "经验白底黑图.png";
+	if (&ExperienceBlack != NULL && &ExperienceCover != NULL)
+	{
+		loadimage(&ExperienceBlack, filepath1.c_str(), 12, 12, true);
+		loadimage(&ExperienceCover, filepath2.c_str(), 12, 12, true);
+	}
+
+}
+
+void Drop::drawDrop()
+{
+	putimage(x, y, &DropCoverImages[type], SRCAND);//遮罩图
+	putimage(x, y, &DropBlackImages[type], SRCPAINT);//黑底彩图
+}
+
+void Drop::drawExperience()
+{
+	// 画经验图标写入位置 0x0000000000000000 时发生访问冲突。
+	putimage(x, y, &ExperienceCover, SRCAND);//遮罩图
+	putimage(x, y, &ExperienceBlack, SRCPAINT);//黑底彩图
+}
